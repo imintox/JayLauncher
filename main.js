@@ -256,7 +256,11 @@ app.whenReady().then(() => {
     try {
       if (g.launchUri) {
         if (!isSafeLaunchUri(g.launchUri)) return false;
-        if (!(await steamStart(g))) await shell.openExternal(g.launchUri);
+        if (!(await steamStart(g))) {
+          // Ask Windows' own shell to open the link. Epic, Ubisoft, Battle.net and GOG then start
+          // from Explorer, not from this app, so they don't inherit anything from it.
+          run('explorer.exe', [g.launchUri]);
+        }
       } else if (g.aumid) {
         if (!isSafeAumid(g.aumid)) return false;
         run('explorer.exe', ['shell:AppsFolder\\' + g.aumid]);
