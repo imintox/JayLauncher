@@ -17,6 +17,7 @@ function createWindow() {
     minWidth: 360,
     backgroundColor: '#0f1115',
     autoHideMenuBar: true,
+    icon: path.join(__dirname, 'renderer', 'logo.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,

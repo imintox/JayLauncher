@@ -1,3 +1,5 @@
+<p align="center"><img src="renderer/logo.png" width="120" alt="Jay Launcher logo"></p>
+
 # Jay Launcher
 
 All your games from every launcher, in one library. Designed by Jayden M.
