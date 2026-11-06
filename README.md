@@ -57,7 +57,7 @@ You never need PowerShell or a command prompt.
 
 - **Launchers:** choose which ones are scanned, with *Select all* / *Clear all*
 - **Custom game folders:** every sub-folder counts as one game
-- **Startup & window:** start with Windows, start minimized, minimize to tray, keep running in the tray when closed, minimize or close when a game starts
+- **Startup & window:** start with Windows, start launchers in the background (Steam and Epic), start minimized, minimize to tray, keep running in the tray when closed, minimize or close when a game starts
 - **General:** scan on start, automatic updates, card size, default sort
 - **Excluded games:** list with *Include* and *Include all*
 

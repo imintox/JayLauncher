@@ -198,7 +198,7 @@ async function renderExcluded() {
 const CHECKS = {
   optStartup: 'startWithWindows', optMinStart: 'startMinimized', optMinTray: 'minimizeToTray',
   optCloseTray: 'closeToTray', optMinLaunch: 'minimizeOnLaunch', optClose: 'closeOnLaunch',
-  optScan: 'scanOnStart', optUpdates: 'autoUpdate', optArt: 'onlineArt',
+  optScan: 'scanOnStart', optUpdates: 'autoUpdate', optArt: 'onlineArt', optQuiet: 'quietLaunch',
 };
 
 async function openSettings() {
@@ -218,7 +218,7 @@ async function openSettings() {
     list.append(row);
   }
   renderFolders(prefs.customFolders || []);
-  for (const [id, key] of Object.entries(CHECKS)) $(id).checked = key in { scanOnStart: 1, autoUpdate: 1, onlineArt: 1 } ? prefs[key] !== false : !!prefs[key];
+  for (const [id, key] of Object.entries(CHECKS)) $(id).checked = key in { scanOnStart: 1, autoUpdate: 1, onlineArt: 1, quietLaunch: 1 } ? prefs[key] !== false : !!prefs[key];
   $('optSize').value = prefs.cardSize || 'medium';
   $('optSort').value = prefs.defaultSort || 'title';
   renderExcluded();
