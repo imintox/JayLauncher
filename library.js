@@ -33,6 +33,18 @@ class Library {
     return [...this.data.scanned, ...this.data.manual].find((g) => g.id === id);
   }
 
+  hidden() {
+    return [...this.data.scanned, ...this.data.manual]
+      .map((g) => ({ ...g, ...(this.data.meta[g.id] || {}) }))
+      .filter((g) => g.hidden)
+      .sort((a, b) => a.title.localeCompare(b.title));
+  }
+
+  unhideAll() {
+    for (const id of Object.keys(this.data.meta)) if (this.data.meta[id].hidden) this.data.meta[id].hidden = false;
+    this.save();
+  }
+
   all() {
     return [...this.data.scanned, ...this.data.manual]
       .map((g) => ({ ...g, ...(this.data.meta[g.id] || {}) }))

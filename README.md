@@ -55,6 +55,15 @@ renderer/        the UI
 build/           installer page, icon, installer artwork
 ```
 
+## Settings
+
+Open **Settings** in the app:
+
+- **Launchers:** tick the launchers to scan (with a count of games found for each). **Select all** and **Clear all** are there too. The installer has the same Select all button.
+- **Custom game folders:** add any folder that holds games (for example `D:\Games`). Each sub-folder is treated as one game, so this works for launchers that aren't built in. Games show up under the folder's name.
+- **General:** start with Windows, scan on start, close Jay Launcher when a game starts, download updates automatically, card size, and default sort.
+- **Hidden games:** games you hid with the ✕ button, with Unhide and Unhide all.
+
 ## Updates
 
 The installed app checks GitHub Releases when it starts and every 6 hours. A new version downloads in the background and a **Restart to update** bar appears. People's launcher choices are kept.

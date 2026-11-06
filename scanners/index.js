@@ -7,7 +7,9 @@ const scanners = [
 
 // enabled: launcher names to scan; everything else is skipped entirely.
 // Returns { games, report } where report[name] = { count, error? } for the Launchers dialog.
-async function scanAll(enabled) {
+const custom = require('./custom');
+
+async function scanAll(enabled, extra = {}) {
   const wanted = scanners.filter((s) => !enabled || enabled.includes(s.name));
   const report = {};
   const results = await Promise.all(
@@ -23,6 +25,15 @@ async function scanAll(enabled) {
       }
     })
   );
+  if ((extra.customFolders || []).length) {
+    try {
+      const g = await custom.scan({ folders: extra.customFolders });
+      report.custom = { count: g.length };
+      results.push(g);
+    } catch (e) {
+      report.custom = { count: 0, error: e.message };
+    }
+  }
   // Never return two entries with the same id.
   const games = [...new Map(results.flat().map((g) => [g.id, g])).values()];
   return { games, report };
