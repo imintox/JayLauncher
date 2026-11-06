@@ -74,7 +74,19 @@ function artNode(g) {
   img.loading = 'lazy';
   let i = 0;
   img.src = sources[0];
-  img.onload = () => img.classList.add('in');
+  img.onload = () => {
+    // A wide banner (Steam's fallback image) would be cut to a thin slice in a tall card:
+    // show it whole, on a blurred copy of itself.
+    if (img.naturalWidth > img.naturalHeight * 1.1) {
+      const bg = el('img', 'bgblur in');
+      bg.alt = '';
+      bg.src = img.src;
+      wrap.insertBefore(bg, img);
+      img.classList.add('wide');
+      wrap.querySelector('.initial')?.remove();
+    }
+    img.classList.add('in');
+  };
   img.onerror = () => { i += 1; if (i < sources.length) img.src = sources[i]; else img.remove(); };
   wrap.append(img);
   return wrap;
