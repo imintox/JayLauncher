@@ -7,6 +7,10 @@ const ALL = [
   { name: 'epic', label: 'Epic Games' },
   { name: 'gog', label: 'GOG' },
   { name: 'ubisoft', label: 'Ubisoft Connect' },
+  { name: 'ea', label: 'EA app' },
+  { name: 'battlenet', label: 'Battle.net' },
+  { name: 'xbox', label: 'Xbox / Game Pass' },
+  { name: 'rockstar', label: 'Rockstar Games' },
 ];
 const KNOWN = new Set(ALL.map((l) => l.name));
 

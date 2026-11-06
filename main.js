@@ -7,6 +7,7 @@ const { scanAll } = require('./scanners');
 
 let lib;
 let settings;
+let lastReport = {};
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -25,7 +26,9 @@ function createWindow() {
 }
 
 async function rescan() {
-  lib.setScanned(await scanAll(settings.enabled()));
+  const { games, report } = await scanAll(settings.enabled());
+  lastReport = report;
+  lib.setScanned(games);
   return lib.all();
 }
 
@@ -37,7 +40,7 @@ app.whenReady().then(() => {
   ipcMain.handle('lib:get', () => lib.all());
   ipcMain.handle('lib:scan', rescan);
 
-  ipcMain.handle('settings:get', () => ({ available: ALL, enabled: settings.enabled() }));
+  ipcMain.handle('settings:get', () => ({ available: ALL, enabled: settings.enabled(), report: lastReport }));
   ipcMain.handle('settings:set', async (_e, list) => {
     settings.set(list);
     return rescan();
@@ -48,6 +51,8 @@ app.whenReady().then(() => {
     if (!g) return false;
     if (g.launchUri) {
       await shell.openExternal(g.launchUri);
+    } else if (g.aumid) {
+      spawn('explorer.exe', ['shell:AppsFolder\\' + g.aumid], { detached: true, stdio: 'ignore' }).unref();
     } else if (g.exe) {
       spawn(g.exe, [], { detached: true, stdio: 'ignore', cwd: path.dirname(g.exe) }).unref();
     } else {

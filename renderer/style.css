@@ -22,11 +22,12 @@ button:hover { background: #232934; }
 .actions .play:hover { background: #2f6fd6; }
 .empty { text-align: center; color: #7d8590; padding: 40px 16px; }
 
-dialog { background: #161a21; color: inherit; border: 1px solid #2a303a; border-radius: 12px; padding: 20px; width: min(92vw, 360px); }
+dialog { background: #161a21; color: inherit; border: 1px solid #2a303a; border-radius: 12px; padding: 20px; width: min(92vw, 360px); max-height: 90vh; overflow: auto; }
 dialog::backdrop { background: rgba(0, 0, 0, .6); }
 dialog h2 { margin: 0 0 12px; font-size: 16px; }
 .opt { display: flex; align-items: center; gap: 10px; padding: 8px 0; cursor: pointer; }
 .opt input { width: 18px; height: 18px; flex: none; max-width: none; }
+.opt small { margin-left: auto; color: #7d8590; }
 .dlg-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
 .primary { background: #3b82f6; border-color: #3b82f6; color: #fff; }
 

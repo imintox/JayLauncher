@@ -24,4 +24,15 @@ function regSubkeys(key) {
   });
 }
 
-module.exports = { regQuery, regSubkeys };
+// Find keys under root whose values contain `text` (one reg call, much faster than listing everything).
+function regSearch(root, text) {
+  return new Promise((resolve) => {
+    if (process.platform !== 'win32') return resolve([]);
+    execFile('reg', ['query', root, '/s', '/f', text, '/d'], { windowsHide: true, maxBuffer: 16 * 1024 * 1024 }, (err, out) => {
+      if (err || !out) return resolve([]);
+      resolve(out.split(/\r?\n/).map((l) => l.trim()).filter((l) => /^HKEY_/i.test(l)));
+    });
+  });
+}
+
+module.exports = { regQuery, regSubkeys, regSearch };

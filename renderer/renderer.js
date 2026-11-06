@@ -97,7 +97,7 @@ $('rescan').onclick = async () => {
 };
 
 async function openSettings() {
-  const { available, enabled } = await window.api.getSettings();
+  const { available, enabled, report = {} } = await window.api.getSettings();
   const list = $('launcherList');
   list.replaceChildren();
   for (const l of available) {
@@ -106,7 +106,9 @@ async function openSettings() {
     cb.type = 'checkbox';
     cb.value = l.name;
     cb.checked = enabled.includes(l.name);
-    row.append(cb, el('span', '', l.label));
+    const r = report[l.name];
+    const note = !r ? '' : r.error ? 'error' : `${r.count} found`;
+    row.append(cb, el('span', '', l.label), el('small', '', note));
     list.append(row);
   }
   $('settings').showModal();

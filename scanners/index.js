@@ -1,18 +1,31 @@
-// Add a new launcher by dropping a file in this folder that exports
-// { name, scan() }, listing it here, and adding it to ALL in ../config.js
-// and to build/installer.nsh.
-const scanners = [require('./steam'), require('./epic'), require('./gog'), require('./ubisoft')];
+// Add a new launcher: create scanners/<name>.js exporting { name, scan() }, list it here,
+// add it to ALL in ../config.js, and add a checkbox in ../build/installer.nsh.
+const scanners = [
+  require('./steam'), require('./epic'), require('./gog'), require('./ubisoft'),
+  require('./ea'), require('./battlenet'), require('./xbox'), require('./rockstar'),
+];
 
-// enabled: array of launcher names to scan. Everything else is skipped entirely.
+// enabled: launcher names to scan; everything else is skipped entirely.
+// Returns { games, report } where report[name] = { count, error? } for the Launchers dialog.
 async function scanAll(enabled) {
   const wanted = scanners.filter((s) => !enabled || enabled.includes(s.name));
+  const report = {};
   const results = await Promise.all(
     wanted.map(async (s) => {
-      try { return await s.scan(); } catch (e) { console.error(`[${s.name}] scan failed:`, e.message); return []; }
+      try {
+        const g = await s.scan();
+        report[s.name] = { count: g.length };
+        return g;
+      } catch (e) {
+        console.error(`[${s.name}] scan failed:`, e.message);
+        report[s.name] = { count: 0, error: e.message };
+        return [];
+      }
     })
   );
-  // Safety net: never return two entries with the same id.
-  return [...new Map(results.flat().map((g) => [g.id, g])).values()];
+  // Never return two entries with the same id.
+  const games = [...new Map(results.flat().map((g) => [g.id, g])).values()];
+  return { games, report };
 }
 
 module.exports = { scanAll, scanners };
