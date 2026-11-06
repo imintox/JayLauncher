@@ -1,0 +1,39 @@
+{
+  "name": "jay-launcher",
+  "productName": "Jay Launcher",
+  "version": "0.3.0",
+  "description": "One library for every game launcher",
+  "author": "Jayden M.",
+  "license": "UNLICENSED",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.jay.launcher",
+    "productName": "Jay Launcher",
+    "copyright": "Designed by Jayden M.",
+    "directories": { "output": "dist", "buildResources": "build" },
+    "files": ["main.js", "preload.js", "library.js", "config.js", "scanners/**", "renderer/**"],
+    "win": { "target": "nsis", "icon": "build/icon.ico" },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Jay Launcher",
+      "runAfterFinish": true,
+      "installerIcon": "icon.ico",
+      "uninstallerIcon": "icon.ico",
+      "installerSidebar": "installerSidebar.bmp",
+      "uninstallerSidebar": "installerSidebar.bmp",
+      "include": "build/installer.nsh"
+    }
+  }
+}
