@@ -115,20 +115,29 @@ function handle(channel, fn) {
 
 const known = (id) => (typeof id === 'string' && id.length < 1000 ? lib.find(id) : undefined);
 
-// Steam opens its big window when a game is started through steam:// while it's closed.
-// "steam.exe -silent -applaunch ID" starts it in the tray and launches the game.
-async function steamQuiet(g) {
+// Steam games start through steam.exe directly, with a clean environment. If Steam is closed this starts it
+// (in the tray when "background" is on) and launches the game; if it's open, the game just starts.
+// Launchers and games must not inherit Electron/Chromium settings from this app.
+function cleanEnv() {
+  const env = {};
+  for (const [k, v] of Object.entries(process.env)) {
+    if (!/^(ELECTRON|CHROME|CHROMIUM|NODE|NPM_|npm_|ORIGINAL_|GDK_|QT_|SDL_|__COMPAT_LAYER)/i.test(k)) env[k] = v;
+  }
+  return env;
+}
+
+async function steamStart(g) {
   const id = g.launcher === 'steam' && (g.launchUri || '').match(/^steam:\/\/rungameid\/(\d{1,10})$/);
   if (!id) return false;
   const exe = (await regQuery('HKCU\\Software\\Valve\\Steam', 'SteamExe')) || '';
   const win = exe.replace(/\//g, '\\');
   if (!isSafeExe(win) || !/\\steam\.exe$/i.test(win)) return false;
-  run(win, ['-silent', '-applaunch', id[1]]);
+  run(win, [...(settings.get().quietLaunch ? ['-silent'] : []), '-applaunch', id[1]]);
   return true;
 }
 
 function run(cmd, args, opts) {
-  const c = spawn(cmd, args, { detached: true, stdio: 'ignore', ...opts });
+  const c = spawn(cmd, args, { detached: true, stdio: 'ignore', windowsHide: false, ...opts, env: cleanEnv() });
   c.on('error', () => {}); // a missing exe must not crash the app
   c.unref();
 }
@@ -247,7 +256,7 @@ app.whenReady().then(() => {
     try {
       if (g.launchUri) {
         if (!isSafeLaunchUri(g.launchUri)) return false;
-        if (!(settings.get().quietLaunch && (await steamQuiet(g)))) await shell.openExternal(g.launchUri);
+        if (!(await steamStart(g))) await shell.openExternal(g.launchUri);
       } else if (g.aumid) {
         if (!isSafeAumid(g.aumid)) return false;
         run('explorer.exe', ['shell:AppsFolder\\' + g.aumid]);
