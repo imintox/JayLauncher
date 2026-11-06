@@ -1,9 +1,9 @@
 name: Build installer
 
 on:
-  workflow_dispatch:      # "Run workflow" button on GitHub
+  workflow_dispatch:      # test build from the Actions tab (does not publish)
   push:
-    tags: ['v*']          # pushing a tag like v0.2.0 also publishes a Release
+    tags: ['v*']          # pushing a tag like v0.5.1 builds AND publishes a Release
 
 jobs:
   build:
@@ -16,13 +16,15 @@ jobs:
         with:
           node-version: 20
       - run: npm install
-      - run: npx electron-builder --win --publish never
+      - name: Test build (no publish)
+        if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+        run: npx electron-builder --win --publish never
+      - name: Build and publish Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: npx electron-builder --win --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/upload-artifact@v4
         with:
           name: Jay-Launcher-Setup
           path: dist/*Setup*.exe
-      - name: Attach to GitHub Release
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
-        with:
-          files: dist/*Setup*.exe

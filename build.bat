@@ -43,7 +43,7 @@ call npm run dist
 if errorlevel 1 goto fail
 
 echo.
-echo Done. Opening the dist folder. Share "Jay Launcher Setup" with people.
+echo Done. Opening the dist folder. Share "Jay-Launcher-Setup" with people.
 explorer dist
 pause
 exit /b

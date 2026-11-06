@@ -1,4 +1,5 @@
 const { app, BrowserWindow, ipcMain, shell, dialog } = require('electron');
+const { autoUpdater } = require('electron-updater');
 const path = require('path');
 const { spawn } = require('child_process');
 const { Library } = require('./library');
@@ -23,6 +24,26 @@ function createWindow() {
     },
   });
   win.loadFile(path.join(__dirname, 'renderer', 'index.html'));
+}
+
+let lastUpdate = null;
+
+// Checks GitHub Releases on start and every 6 hours; downloads in the background.
+function setupUpdates() {
+  if (!app.isPackaged) return;
+  const send = (s) => {
+    lastUpdate = s;
+    BrowserWindow.getAllWindows().forEach((w) => w.webContents.send('update:status', s));
+  };
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = true;
+  autoUpdater.on('update-available', (i) => send({ state: 'downloading', version: i.version }));
+  autoUpdater.on('update-not-available', () => send({ state: 'current' }));
+  autoUpdater.on('update-downloaded', (i) => send({ state: 'ready', version: i.version }));
+  autoUpdater.on('error', (e) => send({ state: 'error', message: String((e && e.message) || e).slice(0, 200) }));
+  const check = () => autoUpdater.checkForUpdates().catch(() => {});
+  check();
+  setInterval(check, 6 * 60 * 60 * 1000);
 }
 
 async function rescan() {
@@ -92,7 +113,17 @@ app.whenReady().then(() => {
     return lib.all();
   });
 
+  ipcMain.handle('app:version', () => app.getVersion());
+  ipcMain.handle('update:get', () => lastUpdate);
+  ipcMain.handle('update:check', () => {
+    if (!app.isPackaged) return 'dev';
+    autoUpdater.checkForUpdates().catch(() => {});
+    return 'checking';
+  });
+  ipcMain.handle('update:install', () => autoUpdater.quitAndInstall());
+
   createWindow();
+  setupUpdates();
   app.on('activate', () => BrowserWindow.getAllWindows().length === 0 && createWindow());
 });
 

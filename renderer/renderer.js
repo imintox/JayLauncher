@@ -96,6 +96,32 @@ $('rescan').onclick = async () => {
   render();
 };
 
+function showUpdate(s) {
+  if (!s) return;
+  const bar = $('updateBar');
+  if (s.state === 'ready') {
+    $('updateMsg').textContent = `Update ${s.version} is ready.`;
+    $('updateBtn').hidden = false;
+    bar.hidden = false;
+  } else if (s.state === 'downloading') {
+    $('updateMsg').textContent = `Downloading update ${s.version}…`;
+    $('updateBtn').hidden = true;
+    bar.hidden = false;
+  } else {
+    bar.hidden = true;
+  }
+  $('updateStatus').textContent =
+    s.state === 'current' ? 'You have the latest version.' : s.state === 'error' ? 'Could not check for updates.' : '';
+}
+$('updateBtn').onclick = () => window.api.installUpdate();
+$('checkUpdate').onclick = async () => {
+  const r = await window.api.checkUpdate();
+  $('updateStatus').textContent = r === 'dev' ? 'Updates only work in the installed app.' : 'Checking…';
+};
+window.api.onUpdate(showUpdate);
+window.api.getUpdate().then(showUpdate);
+window.api.version().then((v) => { $('ver').textContent = 'v' + v; });
+
 async function openSettings() {
   const { available, enabled, report = {} } = await window.api.getSettings();
   const list = $('launcherList');
