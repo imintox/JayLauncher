@@ -17,9 +17,15 @@ Windows will show a "Windows protected your PC" screen because the installer is 
 | Steam | `appmanifest_*.acf` in every Steam library folder | Working |
 | Epic Games | Manifests in `ProgramData\Epic` | Working |
 | GOG | Registry (`GOG.com\Games`) | Not yet tested on a real install |
-| Ubisoft Connect | Registry (`Ubisoft\Launcher\Installs`) | Not yet tested on a real install. Titles come from the install folder name |
+| Ubisoft Connect | Registry (`Ubisoft\Launcher\Installs`); titles come from the install folder name | Not yet tested on a real install |
+| EA app | Registry (`EA Games`) plus each game's `__Installer\installerdata.xml` | Not yet tested on a real install |
+| Battle.net | Blizzard uninstall entries in the registry; known Blizzard titles only | Not yet tested on a real install |
+| Xbox / Game Pass | Installed Xbox packages (PowerShell `Get-AppxPackage`) | Not yet tested on a real install |
+| Rockstar Games | Registry (`Rockstar Games`); GTA V, RDR2, Max Payne 3, L.A. Noire | Not yet tested on a real install |
 
-Windows only. Games that aren't detected can be added by hand with **+ Add game**.
+Not supported yet: itch.io and Amazon Games (their game lists are stored in SQLite databases). Windows only.
+
+The **Launchers** dialog shows how many games each scanner found, so you can see which ones are working. Games that aren't detected can be added by hand with **+ Add game**.
 
 ## Build the installer
 
