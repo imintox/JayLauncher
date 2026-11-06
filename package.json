@@ -1,14 +1,14 @@
 {
   "name": "jay-launcher",
   "productName": "Jay Launcher",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "One library for every game launcher",
   "author": "Jayden M.",
   "license": "UNLICENSED",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "test": "node tests/security.test.js && node tests/xbox.test.js",
+    "test": "node tests/security.test.js && node tests/xbox.test.js && node tests/art.test.js",
     "dist": "electron-builder --win"
   },
   "devDependencies": {
@@ -30,6 +30,7 @@
       "library.js",
       "config.js",
       "security.js",
+      "art.js",
       "scanners/**",
       "renderer/**"
     ],

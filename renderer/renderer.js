@@ -61,6 +61,13 @@ function artNode(g) {
   wrap.style.setProperty('--h', hue(g.title));
   wrap.append(el('span', 'initial', (g.title.match(/[A-Za-z0-9]/) || ['?'])[0].toUpperCase()));
   const sources = [g.art, g.artFallback].filter(Boolean);
+  if (!sources.length && g.icon) {
+    const ic = el('img', 'gameicon');
+    ic.alt = '';
+    ic.src = g.icon;
+    wrap.append(ic);
+    return wrap;
+  }
   if (!sources.length) return wrap;
   const img = el('img');
   img.alt = '';
@@ -179,7 +186,7 @@ async function renderExcluded() {
 const CHECKS = {
   optStartup: 'startWithWindows', optMinStart: 'startMinimized', optMinTray: 'minimizeToTray',
   optCloseTray: 'closeToTray', optMinLaunch: 'minimizeOnLaunch', optClose: 'closeOnLaunch',
-  optScan: 'scanOnStart', optUpdates: 'autoUpdate',
+  optScan: 'scanOnStart', optUpdates: 'autoUpdate', optArt: 'onlineArt',
 };
 
 async function openSettings() {
@@ -199,7 +206,7 @@ async function openSettings() {
     list.append(row);
   }
   renderFolders(prefs.customFolders || []);
-  for (const [id, key] of Object.entries(CHECKS)) $(id).checked = key in { scanOnStart: 1, autoUpdate: 1 } ? prefs[key] !== false : !!prefs[key];
+  for (const [id, key] of Object.entries(CHECKS)) $(id).checked = key in { scanOnStart: 1, autoUpdate: 1, onlineArt: 1 } ? prefs[key] !== false : !!prefs[key];
   $('optSize').value = prefs.cardSize || 'medium';
   $('optSort').value = prefs.defaultSort || 'title';
   renderExcluded();

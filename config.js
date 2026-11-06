@@ -22,6 +22,7 @@ const DEFAULTS = {
   minimizeOnLaunch: false, // minimize after starting a game
   autoUpdate: true,
   scanOnStart: true,
+  onlineArt: true, // look up missing covers on Steam's store by game title
   closeOnLaunch: false,
   cardSize: 'medium', // small | medium | large
   defaultSort: 'title', // title | recent | fav

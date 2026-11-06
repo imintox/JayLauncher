@@ -6,6 +6,7 @@ const { Library } = require('./library');
 const { Settings, ALL } = require('./config');
 const { scanAll } = require('./scanners');
 const { isSafeLaunchUri, isSafeAumid, isSafeExe } = require('./security');
+const art = require('./art');
 
 nativeTheme.themeSource = 'dark';
 
@@ -15,6 +16,7 @@ let lastReport = {};
 let lastUpdate = null;
 let mainWindow = null;
 let tray = null;
+let artCache = null;
 let quitting = false;
 
 // Only one copy at a time: starting it again just brings the open one forward.
@@ -155,7 +157,21 @@ function setupUpdates() {
 async function rescan() {
   const { games, report } = await scanAll(settings.enabled(), { customFolders: settings.get().customFolders });
   lastReport = report;
+  art.apply(games, artCache);
   lib.setScanned(games);
+  // Covers for non-Steam games are looked up in the background, then the window refreshes.
+  art.fill(games, artCache, {
+    online: settings.get().onlineArt,
+    getIcon: async (exe) => {
+      const img = await app.getFileIcon(exe, { size: 'large' });
+      return img.isEmpty() ? null : img.toDataURL();
+    },
+  }).then((found) => {
+    if (!found) return;
+    art.apply(games, artCache);
+    lib.setScanned(games);
+    if (mainWindow) mainWindow.webContents.send('lib:changed');
+  }).catch(() => {});
   return lib.all();
 }
 
@@ -167,6 +183,7 @@ app.whenReady().then(() => {
   session.defaultSession.setPermissionCheckHandler(() => false);
 
   lib = new Library(app.getPath('userData'));
+  artCache = new art.ArtCache(app.getPath('userData'));
   // The installer drops launchers.conf next to the app exe.
   settings = new Settings(app.getPath('userData'), path.join(path.dirname(process.execPath), 'launchers.conf'));
 
