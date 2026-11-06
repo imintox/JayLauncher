@@ -3,27 +3,45 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https: data:; style-src 'self'; script-src 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self' data: https://cdn.cloudflare.steamstatic.com; style-src 'self'; script-src 'self'; base-uri 'none'; object-src 'none'; frame-src 'none'; connect-src 'none'">
   <title>Jay Launcher</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body data-size="medium">
+  <div id="scanBar" class="scanbar" hidden></div>
   <div id="updateBar" class="updatebar" hidden>
     <span id="updateMsg"></span>
     <button id="updateBtn" type="button" class="primary" hidden>Restart to update</button>
   </div>
+
   <header class="bar">
-    <h1><img class="logo" src="logo.png" alt=""> Jay Launcher <span id="count"></span></h1>
-    <input id="search" type="search" placeholder="Search games…" autocomplete="off">
-    <select id="sort" aria-label="Sort">
-      <option value="title">A–Z</option>
-      <option value="recent">Recently played</option>
-      <option value="fav">Favorites first</option>
-    </select>
-    <button id="add" type="button">+ Add game</button>
-    <button id="rescan" type="button">Rescan</button>
-    <button id="settingsBtn" type="button">⚙ Settings</button>
+    <div class="brand"><img class="logo" src="logo.png" alt=""><span class="name">Jay Launcher</span><span id="count" class="badge"></span></div>
+    <label class="searchbox"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="search" type="search" placeholder="Search games…   ( / )" autocomplete="off"></label>
+    <div class="tools">
+      <select id="sort" aria-label="Sort">
+        <option value="title">A–Z</option>
+        <option value="recent">Recently played</option>
+        <option value="fav">Favorites first</option>
+      </select>
+      <button id="add" type="button">+ Add game</button>
+      <button id="rescan" type="button">Rescan</button>
+      <button id="settingsBtn" type="button" class="primary">⚙ Settings</button>
+    </div>
   </header>
+
+  <nav id="filters" class="chips"></nav>
+  <main id="grid" class="grid"></main>
+
+  <section id="empty" class="empty" hidden>
+    <img src="logo.png" alt="" class="float">
+    <h2 id="emptyTitle">No games yet</h2>
+    <p id="emptyText">Pick your launchers or add a game folder in Settings.</p>
+    <button id="emptySettings" type="button" class="primary">Open Settings</button>
+  </section>
+
+  <footer class="credit">Jay Launcher <span id="ver"></span> · Designed by Jayden M. · <button id="checkUpdate" type="button" class="linkbtn">Check for updates</button> <span id="updateStatus"></span></footer>
+  <div id="toasts" class="toasts" aria-live="polite"></div>
 
   <dialog id="settings">
     <form method="dialog" id="settingsForm">
@@ -47,10 +65,18 @@
       </section>
 
       <section>
-        <h3>General</h3>
+        <h3>Startup &amp; window</h3>
         <label class="opt"><input type="checkbox" id="optStartup"><span>Start Jay Launcher when Windows starts</span></label>
-        <label class="opt"><input type="checkbox" id="optScan"><span>Scan for games when the app starts</span></label>
+        <label class="opt"><input type="checkbox" id="optMinStart"><span>Start minimized</span></label>
+        <label class="opt"><input type="checkbox" id="optMinTray"><span>Minimize to the system tray instead of the taskbar</span></label>
+        <label class="opt"><input type="checkbox" id="optCloseTray"><span>Keep running in the tray when the window is closed</span></label>
+        <label class="opt"><input type="checkbox" id="optMinLaunch"><span>Minimize when a game starts</span></label>
         <label class="opt"><input type="checkbox" id="optClose"><span>Close Jay Launcher when a game starts</span></label>
+      </section>
+
+      <section>
+        <h3>General</h3>
+        <label class="opt"><input type="checkbox" id="optScan"><span>Scan for games when the app starts</span></label>
         <label class="opt"><input type="checkbox" id="optUpdates"><span>Download updates automatically</span></label>
         <label class="field"><span>Card size</span>
           <select id="optSize">
@@ -69,8 +95,9 @@
       </section>
 
       <section>
-        <h3>Hidden games</h3>
-        <div id="hiddenList"></div>
+        <h3>Excluded games</h3>
+        <p class="hint">Games you excluded stay out of the library, even after a rescan. Include them again here.</p>
+        <div id="excludedList"></div>
       </section>
 
       <div class="dlg-actions">
@@ -79,11 +106,6 @@
       </div>
     </form>
   </dialog>
-
-  <nav id="filters" class="chips"></nav>
-  <main id="grid" class="grid"></main>
-  <p id="empty" class="empty" hidden>No games found. Open Settings to pick launchers or add a game folder.</p>
-  <footer class="credit">Jay Launcher <span id="ver"></span> · Designed by Jayden M. · <button id="checkUpdate" type="button" class="linkbtn">Check for updates</button> <span id="updateStatus"></span></footer>
   <script src="renderer.js"></script>
 </body>
 </html>

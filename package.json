@@ -1,18 +1,20 @@
 {
   "name": "jay-launcher",
   "productName": "Jay Launcher",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "One library for every game launcher",
   "author": "Jayden M.",
   "license": "UNLICENSED",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
+    "test": "node tests/security.test.js",
     "dist": "electron-builder --win"
   },
   "devDependencies": {
-    "electron": "^33.0.0",
-    "electron-builder": "^25.1.8"
+    "electron": "^45.2.2",
+    "electron-builder": "^25.1.8",
+    "@electron/fuses": "^1.8.0"
   },
   "build": {
     "appId": "com.jay.launcher",
@@ -27,6 +29,7 @@
       "preload.js",
       "library.js",
       "config.js",
+      "security.js",
       "scanners/**",
       "renderer/**"
     ],
@@ -54,7 +57,8 @@
       "owner": "imintox",
       "repo": "JayLauncher",
       "releaseType": "release"
-    }
+    },
+    "afterPack": "build/afterPack.js"
   },
   "dependencies": {
     "electron-updater": "^6.3.9"

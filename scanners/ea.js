@@ -1,6 +1,7 @@
 const fs = require('fs/promises');
 const path = require('path');
 const util = require('./util');
+const { isInside } = require('../security');
 
 const ROOT = 'HKLM\\SOFTWARE\\WOW6432Node\\EA Games';
 const SKIP = /touchup|cleanup|uninstall|activation|crashreport|redist/i;
@@ -11,7 +12,9 @@ async function findExe(dir, readFile) {
     const xml = await readFile(path.join(dir, '__Installer', 'installerdata.xml'), 'utf8');
     for (const m of xml.matchAll(/<filePath>\s*\[[^\]]*\]([^<]+)<\/filePath>/g)) {
       const rel = m[1].trim().replace(/^[\\/]+/, '');
-      if (rel && /\.exe$/i.test(rel) && !SKIP.test(rel)) return path.join(dir, rel);
+      if (!rel || !/\.exe$/i.test(rel) || SKIP.test(rel)) continue;
+      const full = path.win32.resolve(dir, rel);
+      if (isInside(dir, full)) return full;
     }
   } catch { /* not an EA game folder */ }
   return null;

@@ -10,19 +10,29 @@ on:
   push:
     tags: ['v*']          # pushing a tag like v0.5.1 also publishes a Release
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: windows-latest
     permissions:
-      contents: write
+      contents: write      # only needed to attach the installer to a Release
     env:
       DO_PUBLISH: ${{ startsWith(github.ref, 'refs/tags/v') || github.event.inputs.publish == 'true' }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
-      - run: npm install
+          node-version: 22
+      - name: Install (exact versions from package-lock.json)
+        if: hashFiles('package-lock.json') != ''
+        run: npm ci
+      - name: Install
+        if: hashFiles('package-lock.json') == ''
+        run: npm install
       - name: Test build (no publish)
         if: env.DO_PUBLISH != 'true'
         run: npx electron-builder --win --publish never
