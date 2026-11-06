@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' https: data:; style-src 'self'; script-src 'self'">
+  <title>Jay Launcher</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="bar">
+    <h1>Jay Launcher <span id="count"></span></h1>
+    <input id="search" type="search" placeholder="Search games…" autocomplete="off">
+    <select id="sort" aria-label="Sort">
+      <option value="title">A–Z</option>
+      <option value="recent">Recently played</option>
+      <option value="fav">Favorites first</option>
+    </select>
+    <button id="add" type="button">+ Add game</button>
+    <button id="rescan" type="button">Rescan</button>
+    <button id="settingsBtn" type="button">Launchers</button>
+  </header>
+  <dialog id="settings">
+    <form method="dialog" id="settingsForm">
+      <h2>Launchers to scan</h2>
+      <div id="launcherList"></div>
+      <div class="dlg-actions">
+        <button type="button" id="settingsCancel">Cancel</button>
+        <button type="submit" class="primary">Save &amp; rescan</button>
+      </div>
+    </form>
+  </dialog>
+  <nav id="filters" class="chips"></nav>
+  <main id="grid" class="grid"></main>
+  <p id="empty" class="empty" hidden>No games found. Click Rescan, or add one manually.</p>
+  <footer class="credit">Jay Launcher · Designed by Jayden M.</footer>
+  <script src="renderer.js"></script>
+</body>
+</html>
