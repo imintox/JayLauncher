@@ -80,7 +80,7 @@ Closing to the tray keeps the app running. Use the tray icon's menu (**Open**, *
 ## Privacy and security
 
 - **Local only.** No account, no telemetry, no analytics. Your library and settings stay in `%APPDATA%\Jay Launcher`.
-- **Only two network uses:** Steam cover images (`cdn.cloudflare.steamstatic.com`) and checking GitHub Releases for updates.
+- **Only three network uses:** Steam cover images (`cdn.cloudflare.steamstatic.com`), checking GitHub Releases for updates, and an optional lookup of missing covers by game title on Steam's store. Turn the lookup off in **Settings → General**.
 - **Locked-down window:** context isolation and sandbox on, Node.js off in the page, strict Content-Security-Policy, no pop-ups, no navigation away, no web permissions, developer tools off in release builds.
 - **Checked launching:** a game can only start through a known launcher link, a valid Xbox app ID or a local `.exe`/`.lnk`/`.bat` path. Network paths and crafted values are refused, and only your own window can send commands to the app.
 - **Hardened Electron:** current Electron release with the `RunAsNode`, `NODE_OPTIONS` and inspector switches disabled, and the app loadable only from its packed archive.
@@ -92,7 +92,7 @@ To report a vulnerability, see [SECURITY.md](SECURITY.md).
 
 **A game is missing.** Open **Settings** and check its launcher is ticked, then press **Rescan**. If the launcher isn't listed, add the game folder under **Custom game folders**.
 
-**A game shows no cover art.** Only Steam games have cover images. Others get a coloured tile with their first letter.
+**A game shows no cover art.** Steam games use Steam's covers. For other launchers, Jay Launcher uses the game's own logo or icon when it can, otherwise looks the title up on Steam's store, and otherwise shows a coloured tile with the first letter. Lookups happen in the background after a scan, so covers appear a moment later. If a game has no match, nothing more can be done automatically.
 
 **I excluded a game by mistake.** Press **Undo** in the toast, or use **Settings → Excluded games**.
 
@@ -133,6 +133,7 @@ Each launcher is a small file in `scanners/` that returns `{ name, scan() }`. Ad
 main.js          app window, tray, updates, launching
 security.js      checks for links, app IDs and paths
 config.js        settings and launcher list
+art.js           finds cover art for non-Steam games
 library.js       saved games, favorites, exclusions
 scanners/        one file per launcher
 renderer/        the interface

@@ -58,6 +58,8 @@ button:focus-visible,select:focus-visible,input:focus-visible,.card:focus-visibl
 .art .initial{font-size:calc(var(--cw)*.5);font-weight:800;color:rgba(255,255,255,.22);user-select:none}
 .art img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .5s,transform .5s var(--ease)}
 .art img.in{opacity:1}
+.art img.gameicon{position:relative;inset:auto;width:34%;height:auto;aspect-ratio:1;opacity:1;filter:drop-shadow(0 6px 14px rgba(0,0,0,.5));animation:fade .5s}
+.art:has(img.gameicon) .initial{display:none}
 .card:hover .art img{transform:scale(1.07)}
 .meta{padding:10px 12px 4px}
 .title{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
