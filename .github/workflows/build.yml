@@ -1,15 +1,22 @@
 name: Build installer
 
 on:
-  workflow_dispatch:      # test build from the Actions tab (does not publish)
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Publish a Release (installed copies will auto-update to it)'
+        type: boolean
+        default: false
   push:
-    tags: ['v*']          # pushing a tag like v0.5.1 builds AND publishes a Release
+    tags: ['v*']          # pushing a tag like v0.5.1 also publishes a Release
 
 jobs:
   build:
     runs-on: windows-latest
     permissions:
       contents: write
+    env:
+      DO_PUBLISH: ${{ startsWith(github.ref, 'refs/tags/v') || github.event.inputs.publish == 'true' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -17,10 +24,10 @@ jobs:
           node-version: 20
       - run: npm install
       - name: Test build (no publish)
-        if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+        if: env.DO_PUBLISH != 'true'
         run: npx electron-builder --win --publish never
       - name: Build and publish Release
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: env.DO_PUBLISH == 'true'
         run: npx electron-builder --win --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
