@@ -66,3 +66,4 @@ dialog h3 { margin: 0 0 6px; font-size: 13px; text-transform: uppercase; letter-
 dialog .opt span { flex: 0 1 auto; }
 
 .bar button { white-space: nowrap; }
+.logo { width: 30px; height: 30px; vertical-align: -9px; margin-right: 6px; border-radius: 7px; }
