@@ -1,38 +1,131 @@
-const { app, BrowserWindow, ipcMain, shell, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, shell, dialog, session, nativeTheme, Tray, Menu, nativeImage } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const path = require('path');
 const { spawn } = require('child_process');
 const { Library } = require('./library');
 const { Settings, ALL } = require('./config');
 const { scanAll } = require('./scanners');
+const { isSafeLaunchUri, isSafeAumid, isSafeExe } = require('./security');
+
+nativeTheme.themeSource = 'dark';
 
 let lib;
 let settings;
 let lastReport = {};
+let lastUpdate = null;
+let mainWindow = null;
+let tray = null;
+let quitting = false;
+
+// Only one copy at a time: starting it again just brings the open one forward.
+if (!app.requestSingleInstanceLock()) app.quit();
+app.on('second-instance', () => showWindow());
+app.on('before-quit', () => { quitting = true; });
+
+/* ---------- window ---------- */
 
 function createWindow() {
   const win = new BrowserWindow({
     width: 1200,
     height: 800,
     minWidth: 360,
-    backgroundColor: '#0f1115',
+    show: false, // shown once painted, so there's no white flash
+    backgroundColor: '#07060d',
     autoHideMenuBar: true,
     icon: path.join(__dirname, 'renderer', 'logo.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
+      sandbox: true,
+      webSecurity: true,
+      allowRunningInsecureContent: false,
+      webviewTag: false,
+      devTools: !app.isPackaged,
     },
   });
+  mainWindow = win;
+  const startHidden = settings.get().startMinimized;
+  win.once('ready-to-show', () => {
+    if (!startHidden) return win.show();
+    if (settings.get().minimizeToTray || settings.get().closeToTray) updateTray(); // stays in the tray
+    else win.showInactive(), win.minimize();
+  });
+  setTimeout(() => { if (!startHidden && !win.isDestroyed() && !win.isVisible()) win.show(); }, 4000);
+  win.on('minimize', () => {
+    if (settings.get().minimizeToTray) { updateTray(); win.hide(); }
+  });
+  win.on('close', (ev) => {
+    if (!quitting && settings.get().closeToTray) { ev.preventDefault(); updateTray(); win.hide(); }
+  });
+  win.on('closed', () => { if (mainWindow === win) mainWindow = null; });
   win.loadFile(path.join(__dirname, 'renderer', 'index.html'));
 }
 
-let lastUpdate = null;
+function showWindow() {
+  if (!mainWindow) return createWindow();
+  if (mainWindow.isMinimized()) mainWindow.restore();
+  mainWindow.show();
+  mainWindow.focus();
+}
+
+// The tray icon exists only while a tray option is on (or the window is hidden).
+function updateTray() {
+  const s = settings.get();
+  const need = s.minimizeToTray || s.closeToTray || s.startMinimized;
+  if (!need && mainWindow && mainWindow.isVisible()) {
+    if (tray) { tray.destroy(); tray = null; }
+    return;
+  }
+  if (tray) return;
+  const icon = nativeImage.createFromPath(path.join(__dirname, 'renderer', 'logo.png')).resize({ width: 32, height: 32 });
+  tray = new Tray(icon);
+  tray.setToolTip('Jay Launcher');
+  tray.setContextMenu(Menu.buildFromTemplate([
+    { label: 'Open Jay Launcher', click: showWindow },
+    { label: 'Rescan games', click: () => rescan().then(() => mainWindow && mainWindow.webContents.send('lib:changed')).catch(() => {}) },
+    { type: 'separator' },
+    { label: 'Quit', click: () => { quitting = true; app.quit(); } },
+  ]));
+  tray.on('click', showWindow);
+}
+
+// The app never opens other windows, navigates away, or embeds pages.
+app.on('web-contents-created', (_e, wc) => {
+  wc.setWindowOpenHandler(() => ({ action: 'deny' }));
+  wc.on('will-navigate', (ev) => ev.preventDefault());
+  wc.on('will-attach-webview', (ev) => ev.preventDefault());
+});
+
+/* ---------- IPC: only our own window may call, and every input is checked ---------- */
+
+function trusted(e) {
+  return !!mainWindow && e.sender === mainWindow.webContents && (!e.senderFrame || !e.senderFrame.parent);
+}
+
+function handle(channel, fn) {
+  ipcMain.handle(channel, (e, ...args) => {
+    if (!trusted(e)) throw new Error('Blocked request from an untrusted sender.');
+    return fn(e, ...args);
+  });
+}
+
+const known = (id) => (typeof id === 'string' && id.length < 1000 ? lib.find(id) : undefined);
+
+function run(cmd, args, opts) {
+  const c = spawn(cmd, args, { detached: true, stdio: 'ignore', ...opts });
+  c.on('error', () => {}); // a missing exe must not crash the app
+  c.unref();
+}
+
+/* ---------- settings + updates ---------- */
 
 // Saves the General settings and applies the ones that need the OS or the updater.
 function applyPrefs(patch) {
-  const p = settings.patch(patch);
+  const p = settings.patch(patch && typeof patch === 'object' ? patch : {});
   if (app.isPackaged) app.setLoginItemSettings({ openAtLogin: p.startWithWindows });
+  if (p.minimizeToTray || p.closeToTray || p.startMinimized) updateTray();
+  else if (tray && mainWindow && mainWindow.isVisible()) { tray.destroy(); tray = null; }
   autoUpdater.autoDownload = p.autoUpdate;
   return p;
 }
@@ -46,6 +139,8 @@ function setupUpdates() {
   };
   autoUpdater.autoDownload = settings.get().autoUpdate;
   autoUpdater.autoInstallOnAppQuit = true;
+  autoUpdater.allowDowngrade = false;
+  autoUpdater.allowPrerelease = false;
   autoUpdater.on('update-available', (i) => send({ state: 'downloading', version: i.version }));
   autoUpdater.on('update-not-available', () => send({ state: 'current' }));
   autoUpdater.on('update-downloaded', (i) => send({ state: 'ready', version: i.version }));
@@ -64,27 +159,34 @@ async function rescan() {
   return lib.all();
 }
 
+/* ---------- start ---------- */
+
 app.whenReady().then(() => {
+  // The app needs no browser permissions (camera, mic, location, notifications, ...).
+  session.defaultSession.setPermissionRequestHandler((_wc, _perm, cb) => cb(false));
+  session.defaultSession.setPermissionCheckHandler(() => false);
+
   lib = new Library(app.getPath('userData'));
   // The installer drops launchers.conf next to the app exe.
   settings = new Settings(app.getPath('userData'), path.join(path.dirname(process.execPath), 'launchers.conf'));
 
-  ipcMain.handle('lib:get', () => lib.all());
-  ipcMain.handle('lib:scan', rescan);
+  handle('lib:get', () => lib.all());
+  handle('lib:scan', rescan);
 
-  ipcMain.handle('settings:get', () => ({
+  handle('settings:get', () => ({
     available: ALL,
     enabled: settings.enabled(),
     report: lastReport,
     prefs: settings.get(),
   }));
-  ipcMain.handle('settings:save', async (_e, { enabled, prefs }) => {
-    settings.set(Array.isArray(enabled) ? enabled : []);
+  handle('settings:save', async (_e, payload) => {
+    const { enabled, prefs } = payload && typeof payload === 'object' ? payload : {};
+    settings.set(Array.isArray(enabled) ? enabled.filter((n) => typeof n === 'string') : []);
     const p = applyPrefs(prefs);
     return { prefs: p, games: await rescan() };
   });
-  ipcMain.handle('settings:addFolder', async () => {
-    const r = await dialog.showOpenDialog({ title: 'Pick a folder that contains your games', properties: ['openDirectory'] });
+  handle('settings:addFolder', async () => {
+    const r = await dialog.showOpenDialog(mainWindow, { title: 'Pick a folder that contains your games', properties: ['openDirectory'] });
     if (r.canceled || !r.filePaths[0]) return null;
     const p = r.filePaths[0];
     const cur = settings.get().customFolders;
@@ -93,55 +195,70 @@ app.whenReady().then(() => {
     }
     return { prefs: settings.get(), games: await rescan() };
   });
-  ipcMain.handle('settings:removeFolder', async (_e, p) => {
-    settings.patch({ customFolders: settings.get().customFolders.filter((f) => f.path !== p) });
+  handle('settings:removeFolder', async (_e, p) => {
+    if (typeof p === 'string') {
+      settings.patch({ customFolders: settings.get().customFolders.filter((f) => f.path !== p) });
+    }
     return { prefs: settings.get(), games: await rescan() };
   });
-  ipcMain.handle('lib:hidden', () => lib.hidden());
-  ipcMain.handle('game:unhide', (_e, id) => {
-    lib.patchMeta(id, { hidden: false });
+  handle('lib:excluded', () => lib.hidden());
+  handle('game:include', (_e, id) => {
+    if (known(id)) lib.patchMeta(id, { hidden: false });
     return lib.all();
   });
-  ipcMain.handle('game:unhideAll', () => {
+  handle('game:includeAll', () => {
     lib.unhideAll();
     return lib.all();
   });
 
-  ipcMain.handle('game:launch', async (_e, id) => {
-    const g = lib.find(id);
+  handle('game:launch', async (_e, id) => {
+    const g = known(id);
     if (!g) return false;
-    if (g.launchUri) {
-      await shell.openExternal(g.launchUri);
-    } else if (g.aumid) {
-      spawn('explorer.exe', ['shell:AppsFolder\\' + g.aumid], { detached: true, stdio: 'ignore' }).unref();
-    } else if (g.exe) {
-      spawn(g.exe, [], { detached: true, stdio: 'ignore', cwd: path.dirname(g.exe) }).unref();
-    } else {
+    try {
+      if (g.launchUri) {
+        if (!isSafeLaunchUri(g.launchUri)) return false;
+        await shell.openExternal(g.launchUri);
+      } else if (g.aumid) {
+        if (!isSafeAumid(g.aumid)) return false;
+        run('explorer.exe', ['shell:AppsFolder\\' + g.aumid]);
+      } else if (g.exe) {
+        if (!isSafeExe(g.exe)) return false;
+        if (/\.exe$/i.test(g.exe)) run(g.exe, [], { cwd: path.dirname(g.exe) });
+        else if (await shell.openPath(g.exe)) return false; // non-empty string = error
+      } else {
+        return false;
+      }
+    } catch {
       return false;
     }
     lib.patchMeta(id, { lastPlayed: Date.now() });
-    if (settings.get().closeOnLaunch) setTimeout(() => app.quit(), 2000);
+    const st = settings.get();
+    if (st.closeOnLaunch) setTimeout(() => { quitting = true; app.quit(); }, 2000);
+    else if (st.minimizeOnLaunch && mainWindow) {
+      if (st.minimizeToTray) { updateTray(); mainWindow.hide(); } else mainWindow.minimize();
+    }
     return true;
   });
 
-  ipcMain.handle('game:fav', (_e, id, value) => {
-    lib.patchMeta(id, { fav: !!value });
+  handle('game:fav', (_e, id, value) => {
+    if (known(id)) lib.patchMeta(id, { fav: !!value });
     return lib.all();
   });
 
-  ipcMain.handle('game:hide', (_e, id) => {
-    lib.patchMeta(id, { hidden: true });
+  handle('game:exclude', (_e, id) => {
+    if (known(id)) lib.patchMeta(id, { hidden: true });
     return lib.all();
   });
 
-  ipcMain.handle('game:addManual', async () => {
-    const r = await dialog.showOpenDialog({
+  handle('game:addManual', async () => {
+    const r = await dialog.showOpenDialog(mainWindow, {
       title: 'Pick a game .exe',
       properties: ['openFile'],
       filters: [{ name: 'Executables', extensions: ['exe', 'lnk', 'bat'] }],
     });
     if (r.canceled || !r.filePaths[0]) return lib.all();
     const exe = r.filePaths[0];
+    if (!isSafeExe(exe)) return lib.all();
     lib.addManual({
       id: `manual:${exe.toLowerCase()}`,
       title: path.basename(exe, path.extname(exe)),
@@ -154,18 +271,21 @@ app.whenReady().then(() => {
     return lib.all();
   });
 
-  ipcMain.handle('app:version', () => app.getVersion());
-  ipcMain.handle('update:get', () => lastUpdate);
-  ipcMain.handle('update:check', () => {
+  handle('app:version', () => app.getVersion());
+  handle('update:get', () => lastUpdate);
+  handle('update:check', () => {
     if (!app.isPackaged) return 'dev';
     autoUpdater.autoDownload = true; // a manual check always downloads
     autoUpdater.checkForUpdates().catch(() => {});
     return 'checking';
   });
-  ipcMain.handle('update:install', () => autoUpdater.quitAndInstall());
+  handle('update:install', () => {
+    if (app.isPackaged) autoUpdater.quitAndInstall();
+  });
 
   createWindow();
   setupUpdates();
+  if (settings.get().minimizeToTray || settings.get().closeToTray) updateTray();
   app.on('activate', () => BrowserWindow.getAllWindows().length === 0 && createWindow());
 });
 

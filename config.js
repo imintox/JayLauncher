@@ -16,6 +16,10 @@ const KNOWN = new Set(ALL.map((l) => l.name));
 
 const DEFAULTS = {
   startWithWindows: false,
+  startMinimized: false, // open hidden in the tray / minimized
+  minimizeToTray: false, // minimizing hides to the tray instead of the taskbar
+  closeToTray: false, // the X button keeps the app running in the tray
+  minimizeOnLaunch: false, // minimize after starting a game
   autoUpdate: true,
   scanOnStart: true,
   closeOnLaunch: false,
