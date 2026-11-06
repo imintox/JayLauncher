@@ -1,7 +1,7 @@
 {
   "name": "jay-launcher",
   "productName": "Jay Launcher",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "One library for every game launcher",
   "author": "Jayden M.",
   "license": "UNLICENSED",
@@ -18,9 +18,22 @@
     "appId": "com.jay.launcher",
     "productName": "Jay Launcher",
     "copyright": "Designed by Jayden M.",
-    "directories": { "output": "dist", "buildResources": "build" },
-    "files": ["main.js", "preload.js", "library.js", "config.js", "scanners/**", "renderer/**"],
-    "win": { "target": "nsis", "icon": "build/icon.ico" },
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "library.js",
+      "config.js",
+      "scanners/**",
+      "renderer/**"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.ico"
+    },
     "nsis": {
       "oneClick": false,
       "perMachine": false,
@@ -33,7 +46,17 @@
       "uninstallerIcon": "icon.ico",
       "installerSidebar": "installerSidebar.bmp",
       "uninstallerSidebar": "installerSidebar.bmp",
-      "include": "build/installer.nsh"
+      "include": "build/installer.nsh",
+      "artifactName": "Jay-Launcher-Setup-${version}.${ext}"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "imintox",
+      "repo": "JayLauncher",
+      "releaseType": "release"
     }
+  },
+  "dependencies": {
+    "electron-updater": "^6.3.9"
   }
 }

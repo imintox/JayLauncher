@@ -55,6 +55,19 @@ renderer/        the UI
 build/           installer page, icon, installer artwork
 ```
 
+## Updates
+
+The installed app checks GitHub Releases when it starts and every 6 hours. A new version downloads in the background and a **Restart to update** bar appears. People's launcher choices are kept.
+
+To publish an update: raise `version` in `package.json`, commit and push, then push a matching tag:
+
+```powershell
+git tag v0.5.1
+git push origin v0.5.1
+```
+
+GitHub builds the installer and publishes the Release automatically. The repo has to stay public for installed copies to find updates.
+
 ## License
 
 Copyright (c) 2026 Jayden M. All rights reserved. See [LICENSE](LICENSE).

@@ -89,6 +89,7 @@ FunctionEnd
 !macroend
 
 !macro customInstall
+  ${IfNot} ${Silent}
   FileOpen $0 "$INSTDIR\launchers.conf" w
   ${If} $stSteam == ${BST_CHECKED}
     FileWrite $0 "steam=1$\r$\n"
@@ -115,6 +116,7 @@ FunctionEnd
     FileWrite $0 "rockstar=1$\r$\n"
   ${EndIf}
   FileClose $0
+  ${EndIf}
 !macroend
 
 !endif

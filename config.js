@@ -38,7 +38,12 @@ class Settings {
       const j = JSON.parse(fs.readFileSync(this.file, 'utf8'));
       if (Array.isArray(j.enabled)) return j.enabled.filter((n) => KNOWN.has(n));
     } catch { /* none yet */ }
-    return readInstallerConf(this.installerConf) || ALL.map((l) => l.name);
+    const fromInstaller = readInstallerConf(this.installerConf);
+    if (fromInstaller) {
+      try { this.set(fromInstaller); } catch { /* keep going without saving */ }
+      return fromInstaller;
+    }
+    return ALL.map((l) => l.name);
   }
 
   set(list) {
