@@ -3,7 +3,7 @@ const fs = require('fs/promises');
 const path = require('path');
 
 const PS =
-  "Get-AppxPackage | Where-Object { $_.InstallLocation -like '*XboxGames*' -or ($_.InstallLocation -and (Test-Path (Join-Path $_.InstallLocation 'MicrosoftGame.config'))) } | Select-Object Name,PackageFamilyName,InstallLocation | ConvertTo-Json -Compress";
+  "Get-AppxPackage | Where-Object { $_.InstallLocation -like '*XboxGames*' -or ($_.InstallLocation -and (Test-Path (Join-Path $_.InstallLocation 'MicrosoftGame.config'))) } | Select-Object Name,PackageFamilyName,InstallLocation,IsResourcePackage,IsFramework | ConvertTo-Json -Compress";
 const NOT_GAMES = /^Microsoft\.(GamingApp|XboxApp|GamingServices|XboxIdentityProvider|XboxGameOverlay|XboxGamingOverlay|Xbox\.TCUI|XboxSpeechToTextOverlay)/i;
 
 function listPackages() {
@@ -27,9 +27,12 @@ async function scan(opts = {}) {
   const games = [];
   for (const pkg of await list()) {
     if (!pkg || !pkg.Name || !pkg.PackageFamilyName || !pkg.InstallLocation || NOT_GAMES.test(pkg.Name)) continue;
+    if (pkg.IsResourcePackage || pkg.IsFramework) continue; // language packs, runtimes
     const loc = pkg.InstallLocation;
     const cfg = await readOrEmpty(readFile, path.join(loc, 'MicrosoftGame.config'));
     const man = await readOrEmpty(readFile, path.join(loc, 'appxmanifest.xml'));
+    // DLC and add-on packages have no app to start. A real game's manifest has an <Application>.
+    if (man && !/<Application[\s>]/.test(man)) continue;
     let title = (cfg.match(/DefaultDisplayName="([^"]+)"/) || [])[1];
     if (!title || /^ms-resource/i.test(title)) {
       title = (loc.match(/XboxGames[\\/]+([^\\/]+)/i) || [])[1] || pkg.Name;

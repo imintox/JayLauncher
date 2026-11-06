@@ -8,7 +8,7 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "test": "node tests/security.test.js",
+    "test": "node tests/security.test.js && node tests/xbox.test.js",
     "dist": "electron-builder --win"
   },
   "devDependencies": {
