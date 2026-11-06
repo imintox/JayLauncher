@@ -29,6 +29,30 @@ Var stEa
 Var stBnet
 Var stXbox
 Var stRockstar
+Var btnAll
+Var btnNone
+
+Function LauncherSelectAll
+  ${NSD_Check} $chkSteam
+  ${NSD_Check} $chkEpic
+  ${NSD_Check} $chkGog
+  ${NSD_Check} $chkUbisoft
+  ${NSD_Check} $chkEa
+  ${NSD_Check} $chkBnet
+  ${NSD_Check} $chkXbox
+  ${NSD_Check} $chkRockstar
+FunctionEnd
+
+Function LauncherClearAll
+  ${NSD_Uncheck} $chkSteam
+  ${NSD_Uncheck} $chkEpic
+  ${NSD_Uncheck} $chkGog
+  ${NSD_Uncheck} $chkUbisoft
+  ${NSD_Uncheck} $chkEa
+  ${NSD_Uncheck} $chkBnet
+  ${NSD_Uncheck} $chkXbox
+  ${NSD_Uncheck} $chkRockstar
+FunctionEnd
 
 Function LauncherPageCreate
   nsDialogs::Create 1018
@@ -57,6 +81,13 @@ Function LauncherPageCreate
   Pop $chkXbox
   ${NSD_CreateCheckbox} 155u 82u 135u 12u "Rockstar Games"
   Pop $chkRockstar
+
+  ${NSD_CreateButton} 10u 104u 60u 14u "Select all"
+  Pop $btnAll
+  ${NSD_OnClick} $btnAll LauncherSelectAll
+  ${NSD_CreateButton} 75u 104u 60u 14u "Clear all"
+  Pop $btnNone
+  ${NSD_OnClick} $btnNone LauncherClearAll
 
   nsDialogs::Show
 FunctionEnd

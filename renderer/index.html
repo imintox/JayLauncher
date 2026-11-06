@@ -7,7 +7,7 @@
   <title>Jay Launcher</title>
   <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body data-size="medium">
   <div id="updateBar" class="updatebar" hidden>
     <span id="updateMsg"></span>
     <button id="updateBtn" type="button" class="primary" hidden>Restart to update</button>
@@ -22,21 +22,67 @@
     </select>
     <button id="add" type="button">+ Add game</button>
     <button id="rescan" type="button">Rescan</button>
-    <button id="settingsBtn" type="button">Launchers</button>
+    <button id="settingsBtn" type="button">⚙ Settings</button>
   </header>
+
   <dialog id="settings">
     <form method="dialog" id="settingsForm">
-      <h2>Launchers to scan</h2>
-      <div id="launcherList"></div>
+      <h2>Settings</h2>
+
+      <section>
+        <h3>Launchers</h3>
+        <p class="hint">Only ticked launchers are scanned. Games from unticked ones leave the library.</p>
+        <div id="launcherList"></div>
+        <div class="inline">
+          <button type="button" id="selAll">Select all</button>
+          <button type="button" id="selNone">Clear all</button>
+        </div>
+      </section>
+
+      <section>
+        <h3>Custom game folders</h3>
+        <p class="hint">Add a folder that holds your games, such as D:\Games. Each sub-folder counts as one game. Use this for any launcher that isn't listed above.</p>
+        <div id="folderList"></div>
+        <button type="button" id="addFolder">+ Add folder…</button>
+      </section>
+
+      <section>
+        <h3>General</h3>
+        <label class="opt"><input type="checkbox" id="optStartup"><span>Start Jay Launcher when Windows starts</span></label>
+        <label class="opt"><input type="checkbox" id="optScan"><span>Scan for games when the app starts</span></label>
+        <label class="opt"><input type="checkbox" id="optClose"><span>Close Jay Launcher when a game starts</span></label>
+        <label class="opt"><input type="checkbox" id="optUpdates"><span>Download updates automatically</span></label>
+        <label class="field"><span>Card size</span>
+          <select id="optSize">
+            <option value="small">Small</option>
+            <option value="medium">Medium</option>
+            <option value="large">Large</option>
+          </select>
+        </label>
+        <label class="field"><span>Default sort</span>
+          <select id="optSort">
+            <option value="title">A–Z</option>
+            <option value="recent">Recently played</option>
+            <option value="fav">Favorites first</option>
+          </select>
+        </label>
+      </section>
+
+      <section>
+        <h3>Hidden games</h3>
+        <div id="hiddenList"></div>
+      </section>
+
       <div class="dlg-actions">
         <button type="button" id="settingsCancel">Cancel</button>
         <button type="submit" class="primary">Save &amp; rescan</button>
       </div>
     </form>
   </dialog>
+
   <nav id="filters" class="chips"></nav>
   <main id="grid" class="grid"></main>
-  <p id="empty" class="empty" hidden>No games found. Click Rescan, or add one manually.</p>
+  <p id="empty" class="empty" hidden>No games found. Open Settings to pick launchers or add a game folder.</p>
   <footer class="credit">Jay Launcher <span id="ver"></span> · Designed by Jayden M. · <button id="checkUpdate" type="button" class="linkbtn">Check for updates</button> <span id="updateStatus"></span></footer>
   <script src="renderer.js"></script>
 </body>
