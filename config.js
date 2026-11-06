@@ -23,6 +23,7 @@ const DEFAULTS = {
   autoUpdate: true,
   scanOnStart: true,
   onlineArt: true, // look up missing covers on Steam's store by game title
+  quietLaunch: true, // start launchers like Steam in the background when launching a game
   closeOnLaunch: false,
   cardSize: 'medium', // small | medium | large
   defaultSort: 'title', // title | recent | fav

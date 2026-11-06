@@ -7,6 +7,7 @@ const { Settings, ALL } = require('./config');
 const { scanAll } = require('./scanners');
 const { isSafeLaunchUri, isSafeAumid, isSafeExe } = require('./security');
 const art = require('./art');
+const { regQuery } = require('./scanners/util');
 
 nativeTheme.themeSource = 'dark';
 
@@ -113,6 +114,18 @@ function handle(channel, fn) {
 }
 
 const known = (id) => (typeof id === 'string' && id.length < 1000 ? lib.find(id) : undefined);
+
+// Steam opens its big window when a game is started through steam:// while it's closed.
+// "steam.exe -silent -applaunch ID" starts it in the tray and launches the game.
+async function steamQuiet(g) {
+  const id = g.launcher === 'steam' && (g.launchUri || '').match(/^steam:\/\/rungameid\/(\d{1,10})$/);
+  if (!id) return false;
+  const exe = (await regQuery('HKCU\\Software\\Valve\\Steam', 'SteamExe')) || '';
+  const win = exe.replace(/\//g, '\\');
+  if (!isSafeExe(win) || !/\\steam\.exe$/i.test(win)) return false;
+  run(win, ['-silent', '-applaunch', id[1]]);
+  return true;
+}
 
 function run(cmd, args, opts) {
   const c = spawn(cmd, args, { detached: true, stdio: 'ignore', ...opts });
@@ -234,7 +247,7 @@ app.whenReady().then(() => {
     try {
       if (g.launchUri) {
         if (!isSafeLaunchUri(g.launchUri)) return false;
-        await shell.openExternal(g.launchUri);
+        if (!(settings.get().quietLaunch && (await steamQuiet(g)))) await shell.openExternal(g.launchUri);
       } else if (g.aumid) {
         if (!isSafeAumid(g.aumid)) return false;
         run('explorer.exe', ['shell:AppsFolder\\' + g.aumid]);
